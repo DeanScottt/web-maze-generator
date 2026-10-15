@@ -5,19 +5,32 @@ import maze from "./maze.js";
 export const sharedBuffer = new SharedArrayBuffer(MAZE_HEIGHT * MAZE_WIDTH);
 const sharedState = new Uint8Array(sharedBuffer);
 const canvasWorker = new Worker(new URL("./canvas.js", import.meta.url), {type: "module"});
+let gen;
 
 function createMaze() {
 	maze.init(sharedBuffer);
 	const midRow = MAZE_HEIGHT >> 1;
 	const midCol = MAZE_WIDTH >> 1;
-	const midIndex = ~~(midRow / MAZE_WIDTH) + midCol;
+	const midIndex = ~~(midRow * MAZE_WIDTH) + midCol;
 
 	canvasWorker.postMessage({
 		type: "seed",
-		pos: [midRow, midCol]
+		idx: midIndex
 	});
 
-	const gen = maze.generate(midIndex);
+	gen = maze.generate(midIndex);
+	maze.debugRender();
+	document.addEventListener("keydown", (event) => {
+		if (event.key === " ") renderMazeGeneration();
+	});
+}
+
+function renderMazeGeneration() {
+	let result = gen.next();
+	while (!result.done && result.value.type !== "connect") result = gen.next();
+	if (result.done) return console.log("DONE");
+	canvasWorker.postMessage(result.value);
+	console.clear();
 	maze.debugRender();
 }
 

@@ -1,4 +1,4 @@
-import { walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST } from "./utils.js"
+import { walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST, toIndex } from "./utils.js"
 import { MAZE_HEIGHT, MAZE_WIDTH } from "./config.js";
 
 class Maze {
@@ -53,10 +53,6 @@ class Maze {
 		this.pos.col += colOffset[dir];
 	}
 
-	toIndex(pos) {
-		return ~~(pos.row * this.cols) + pos.col;
-	}
-
 	inBounds(dir) {
 		switch (dir) {
 			case NORTH:
@@ -91,20 +87,20 @@ class Maze {
 
 	*createPath() {
 		while (true) {
-			const idx = this.toIndex(this.pos);
+			const idx = toIndex(this.pos);
 			if (this.data[idx] & IN_MAZE) return;
 
 			let dir = null;
 			do {dir = ~~(Math.random() * 4)} while (!this.inBounds(dir));
 
 			this.dropBreadCrumb(idx, dir);
-			yield {type: "walk", pos: [this.pos.row, this.pos.col]};
+			yield {type: "walk", idx};
 			this.move(dir);
 		}
 	}
 
 	*connectPath(startIdx) {
-		const returnData = [];
+		const returnData = [startIdx];
 
 		this.setPos(startIdx);
 		this.data[startIdx] |= IN_MAZE;
@@ -113,9 +109,10 @@ class Maze {
 		let dir = this.getBreadCrumb(startIdx);
 		this.deleteWall(startIdx, dir);
 		this.move(dir);
-		let idx = this.toIndex(this.pos);
+		let idx = toIndex(this.pos);
 
 		while (!(this.data[idx] & IN_MAZE)) {
+			returnData.push(idx);
 			this.data[idx] |= IN_MAZE;
 			this.totalMapped++;
 			this.deleteWall(idx, oppositeDir(dir));
@@ -123,10 +120,11 @@ class Maze {
 
 			this.deleteWall(idx, dir);
 			this.move(dir);
-			idx = this.toIndex(this.pos);
+			idx = toIndex(this.pos);
 		}
 
 		this.deleteWall(idx, oppositeDir(dir));
+		yield {type: "connect", indexes: returnData};
 	}
 
 	*generate(seedIndex) {
@@ -136,8 +134,8 @@ class Maze {
 			if (this.totalMapped === this.totalCells) break;
 			if (this.data[idx] & IN_MAZE) continue;
 			this.setPos(idx);
-			this.createPath();
-			this.connectPath(idx);
+			yield* this.createPath();
+			yield* this.connectPath(idx);
 		}
 	}
 }
