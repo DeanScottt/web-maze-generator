@@ -1,6 +1,56 @@
 import { walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, VISITED_MASK, NORTH, EAST, SOUTH, WEST, toIndex } from "./utils.js"
 import { MAZE_HEIGHT, MAZE_WIDTH } from "./config.js";
 
+class VirtualGrid {
+	#valueToPosition = new Map();
+	#positionToValue = new Map();
+	#originalSize;
+	size;
+
+	constructor(rows, cols) {
+		this.#originalSize = rows * cols;
+		this.reset();
+	}
+
+	reset() {
+		this.size = this.#originalSize;
+		this.#valueToPosition.clear();
+		this.#positionToValue.clear();
+	}
+
+	#getValueAt(pos) {
+		return this.#positionToValue.get(pos) ?? pos;
+	}
+
+	#getPositionOf(val) {
+		return this.#valueToPosition.get(val) ?? val;
+	}
+
+	markCell(idx) {
+		const pos = this.#getPositionOf(idx);
+		this.#removeAt(pos);
+	}
+
+	#removeAt(pos) {
+		const marked = this.#getValueAt(pos);
+		const lastPos = --this.size;
+		const lastVal = this.#getValueAt(lastPos);
+
+		this.#positionToValue.set(pos, lastVal);
+		this.#valueToPosition.set(lastVal, pos);
+
+		this.#positionToValue.delete(lastPos);
+		this.#valueToPosition.delete(marked);
+
+		return marked;
+	}
+
+	getRandom() {
+		const rand = ~~(Math.random() * this.size);
+		return this.#removeAt(rand);
+	}
+}
+
 class Maze {
 	totalMapped;
 	pos;
