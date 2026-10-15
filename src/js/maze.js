@@ -1,4 +1,5 @@
-import { MAZE_HEIGHT, MAZE_WIDTH, walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST } from "./config.js";
+import { walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST } from "./utils.js"
+import { MAZE_HEIGHT, MAZE_WIDTH } from "./config.js";
 
 class Maze {
 	totalMapped;
@@ -88,7 +89,7 @@ class Maze {
 		return this.data[idx] >> WALK_DIR_SHIFT;
 	}
 
-	createPath() {
+	*createPath() {
 		while (true) {
 			const idx = this.toIndex(this.pos);
 			if (this.data[idx] & IN_MAZE) return;
@@ -97,11 +98,14 @@ class Maze {
 			do {dir = ~~(Math.random() * 4)} while (!this.inBounds(dir));
 
 			this.dropBreadCrumb(idx, dir);
+			yield {type: "walk", pos: [this.pos.row, this.pos.col]};
 			this.move(dir);
 		}
 	}
 
-	connectPath(startIdx) {
+	*connectPath(startIdx) {
+		const returnData = [];
+
 		this.setPos(startIdx);
 		this.data[startIdx] |= IN_MAZE;
 		this.totalMapped++;
@@ -125,7 +129,7 @@ class Maze {
 		this.deleteWall(idx, oppositeDir(dir));
 	}
 
-	generate(seedIndex) {
+	*generate(seedIndex) {
 		this.data[seedIndex] |= IN_MAZE;
 
 		for (let idx = 0; idx < this.totalCells; idx++) {

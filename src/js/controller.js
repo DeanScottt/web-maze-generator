@@ -1,4 +1,5 @@
-import { MAZE_HEIGHT, MAZE_WIDTH, walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST } from "./config.js";
+import { MAZE_HEIGHT, MAZE_WIDTH } from "./config.js";
+import { walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST } from "./utils.js"
 import maze from "./maze.js";
 
 export const sharedBuffer = new SharedArrayBuffer(MAZE_HEIGHT * MAZE_WIDTH);
@@ -15,8 +16,8 @@ function createMaze() {
 		type: "seed",
 		pos: [midRow, midCol]
 	});
-	
-	maze.generate(midIndex);
+
+	const gen = maze.generate(midIndex);
 	maze.debugRender();
 }
 
