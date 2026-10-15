@@ -1,7 +1,4 @@
-import { MAZE_HEIGHT, MAZE_WIDTH, walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST } from "../config.js";
-
-const worker = new Worker("canvas.js", {type: "module"});
-const offScreenCanvas = document.querySelector("canvas").transferControlToOffscreen();
+import { MAZE_HEIGHT, MAZE_WIDTH, walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST } from "./config.js";
 
 class Maze {
 	totalMapped;
@@ -146,12 +143,7 @@ class Maze {
 	}
 }
 
-
 ///////////////////////////////////
-
-const sharedBuffer = new SharedArrayBuffer(MAZE_HEIGHT * MAZE_WIDTH);
-const maze = new Maze(MAZE_HEIGHT, MAZE_WIDTH);
-init();
 
 function init() {
 	worker.postMessage({
@@ -164,3 +156,11 @@ function init() {
 	maze.generate();
 	maze.debugRender();
 }
+
+///////////////////////////////////
+
+const worker = new Worker(new URL("./canvas.js", import.meta.url), {type: "module"});
+const offScreenCanvas = document.querySelector("canvas").transferControlToOffscreen();
+const sharedBuffer = new SharedArrayBuffer(MAZE_HEIGHT * MAZE_WIDTH);
+const maze = new Maze(MAZE_HEIGHT, MAZE_WIDTH);
+init();

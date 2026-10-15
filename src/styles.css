@@ -12,8 +12,20 @@ body {
 	display: grid;
 }
 
-canvas {
+.canvas__container {
 	place-self: center;
+	display: grid;
+	grid-template: 100% / 100%;
 	height: 90dvh;
 	aspect-ratio: 1;
+}
+
+canvas {
+	grid-area: 1 / 1;
+	height: 100%;
+	aspect-ratio: 1;
+}
+
+.canvas__maze-walls {
+	background-color: #00000000;
 }

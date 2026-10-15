@@ -4,10 +4,13 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Maze Solver</title>
-		<link rel="stylesheet" href="styles.css" />
-		<script type="module" src="script.js"></script>
+		<link rel="stylesheet" href="src/styles.css" />
+		<script type="module" src="src/js/maze.js"></script>
 	</head>
 	<body>
-		<canvas height="1000" width="1000"></canvas>
+		<div class="canvas__container">
+			<canvas class="canvas__maze-paths" height="1000" width="1000"></canvas>
+			<canvas class="canvas__maze-walls" height="1000" width="1000"></canvas>
+		</div>
 	</body>
 </html>
