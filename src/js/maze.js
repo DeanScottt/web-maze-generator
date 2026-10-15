@@ -91,23 +91,23 @@ class Maze {
 		while (true) {
 			// Return when hitting existing maze
 			const idx = toIndex(this.pos);
-			if (this.data[idx] & IN_MAZE) return;
+			if (this.data[idx] & IN_MAZE) break;
 
 			// Culling loop
 			if (this.data[idx] & VISITED_MASK) {
-				const returnData = [];
+				const cullData = [];
 				const startIdx = idx;
 				let i = startIdx;
 
 				do {
 					const dir = this.getBreadCrumb(i);
 					this.data[i] = this.data[i] & ~(VISITED_MASK | WALK_DIR_MASK);
-					returnData.push(i);
+					cullData.push(i);
 					this.move(dir);
 					i = toIndex(this.pos);
 				} while (i !== startIdx);
 				
-				yield {type: "cull", indexes: returnData};
+				yield {type: "cull", indexes: cullData};
 				continue;
 			}
 
@@ -120,9 +120,8 @@ class Maze {
 
 			const dir = dirOptions[~~(Math.random() * dirOptions.length)];
 			this.dropBreadCrumb(idx, dir);
-			yield {type: "walk", idx};
 			this.move(dir);
-
+			yield {type: "walk", idx};
 		}
 	}
 
@@ -172,3 +171,5 @@ class Maze {
 }
 
 export default new Maze();
+
+//* switch to fully index based system. pos is hardly worth tracking and can be converted as needed.

@@ -32,7 +32,7 @@ function renderMazeGeneration() {
 	canvasWorker.postMessage(result.value);
 	setTimeout(() => {
 		renderMazeGeneration();
-	}, 5);
+	}, 10);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////

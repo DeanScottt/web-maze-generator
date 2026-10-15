@@ -53,10 +53,11 @@ function clearMaze() {
 }
 
 function createCell(idx) {
+	wallLayer.fillStyle = COLOR_PATH;
 	const { row, col } = toCoord(idx);
 	const y = cellOriginInset(row);
 	const x = cellOriginInset(col);
-	wallLayer.clearRect(x, y, pathWidth, pathWidth);
+	wallLayer.fillRect(x, y, pathWidth, pathWidth);
 }
 
 function walk(idx) {
