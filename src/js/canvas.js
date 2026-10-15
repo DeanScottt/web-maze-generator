@@ -31,21 +31,25 @@ function init(data) {
 	wallLayerCanvas.width = newCanvasWidth;
 	wallLayerCanvas.height = newCanvasWidth;
 
-	drawWalls();
+	debugGrid();
 }
 
-function drawWalls() {
-	for (let i = 0; i < sharedData.length; i++) {
-		const color = "#" + Array.from({length: 3}, () => (Math.ceil(Math.random() * 255)).toString(16).padStart(2, 0)).join("");
-		console.log(color);
-		wallLayer.fillStyle = color;
-		const row = ~~(i / MAZE_WIDTH);
-		const col = i % MAZE_WIDTH;
+const cellOriginInset = (idx) => idx * (wallWidth + pathWidth);
 
-		const xCenter = (col + 1) * wallWidth + (col * pathWidth) + (pathWidth >> 1) + 1;
-		const yCenter = (row + 1) * wallWidth + (row * pathWidth) + (pathWidth >> 1) + 1;
-		
-		wallLayer.fillRect(xCenter, yCenter, 5, 5);
-		wallLayer.fillRect(xCenter - (pathWidth >> 1) - wallWidth, yCenter - (pathWidth >> 1) - wallWidth, wallWidth, pathWidth + (wallWidth << 1));
+function deleteWall(idx, dir) {
+	const row = 2;
+}
+
+
+
+
+
+
+function debugGrid() {
+	wallLayer.fillStyle = "#FFF";
+	for (let i = 0; i <= MAZE_WIDTH; i++) {
+		const inset = i * (wallWidth + pathWidth);
+		wallLayer.fillRect(inset, 0, wallWidth, wallLayerCanvas.height);
+		wallLayer.fillRect(0, inset, wallLayerCanvas.height, wallWidth);
 	}
 }
