@@ -1,5 +1,5 @@
-export const MAZE_WIDTH = 30;
-export const MAZE_HEIGHT = 30;
+export const MAZE_WIDTH = 10;
+export const MAZE_HEIGHT = 10;
 export const CELL_SIZE_RATIO = 10;
 
 export const COLOR_WALL = "#FFF";

@@ -86,7 +86,8 @@ class Maze {
 	}
 
 	*createPath() {
-		console.log(this.data[0].toString(2).padStart(8, 0));
+		let lastDir = null;
+
 		while (true) {
 			// Return when hitting existing maze
 			const idx = toIndex(this.pos);
@@ -112,9 +113,12 @@ class Maze {
 
 			// Exploring further
 			this.data[idx] |= VISITED_MASK;
-			let dir = null;
-			do {dir = ~~(Math.random() * 4)} while (!this.inBounds(dir));
+			const dirOptions = [];
+			for (let dir = 0; dir < 4; dir++) {
+				if (this.inBounds(dir) && dir !== lastDir) dirOptions.push(dir);
+			}
 
+			const dir = dirOptions[~~(Math.random() * dirOptions.length)];
 			this.dropBreadCrumb(idx, dir);
 			yield {type: "walk", idx};
 			this.move(dir);
@@ -125,15 +129,18 @@ class Maze {
 	*connectPath(startIdx) {
 		const returnData = [startIdx];
 
+		// Set in-maze flag on first cell
 		this.setPos(startIdx);
 		this.data[startIdx] |= IN_MAZE;
 		this.totalMapped++;
 		
+		// Delete the wall and move to next cell in chain
 		let dir = this.getBreadCrumb(startIdx);
 		this.deleteWall(startIdx, dir);
 		this.move(dir);
 		let idx = toIndex(this.pos);
 
+		// Loop until maze is hit, setting flags and clearing walls
 		while (!(this.data[idx] & IN_MAZE)) {
 			returnData.push(idx);
 			this.data[idx] |= IN_MAZE;
@@ -146,6 +153,7 @@ class Maze {
 			idx = toIndex(this.pos);
 		}
 
+		// Delete final wall and yield the chain as a group
 		this.deleteWall(idx, oppositeDir(dir));
 		yield {type: "connect", indexes: returnData};
 	}
