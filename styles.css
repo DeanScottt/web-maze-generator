@@ -1,0 +1,19 @@
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	font-size: 10px;
+}
+
+body {
+	background-color: #000;
+	height: 100dvh;
+	width: 100dvw;
+	display: grid;
+}
+
+canvas {
+	place-self: center;
+	height: 90dvh;
+	aspect-ratio: 1;
+}
