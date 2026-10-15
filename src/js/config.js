@@ -7,5 +7,3 @@ export const COLOR_PATH = "#28C";
 export const COLOR_EXPLORE = "#9A2";
 export const COLOR_SEARCH = "#C40";
 export const COLOR_SOLVED = "#0F7";
-
-//* create a constant for walk path batch size for yields

@@ -171,5 +171,3 @@ class Maze {
 }
 
 export default new Maze();
-
-//* switch to fully index based system. pos is hardly worth tracking and can be converted as needed.

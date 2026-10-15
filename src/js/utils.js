@@ -21,5 +21,3 @@ export function toCoord(idx) {
 	const col = idx % MAZE_WIDTH;
 	return { row, col };
 }
-
-//* reorder bit flags so i don't have to mask the visited flag to check path
