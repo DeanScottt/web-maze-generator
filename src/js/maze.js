@@ -148,9 +148,10 @@ class Maze {
 function init() {
 	worker.postMessage({
 		type: "init",
-		canvas: offScreenCanvas,
+		pathLayer: offScreenCanvasPaths,
+		wallLayer: offScreenCanvasWalls,
 		buffer: sharedBuffer
-	}, [offScreenCanvas]);
+	}, [offScreenCanvasPaths, offScreenCanvasWalls]);
 
 	maze.reset();
 	maze.generate();
@@ -160,7 +161,8 @@ function init() {
 ///////////////////////////////////
 
 const worker = new Worker(new URL("./canvas.js", import.meta.url), {type: "module"});
-const offScreenCanvas = document.querySelector("canvas").transferControlToOffscreen();
+const offScreenCanvasPaths = document.querySelector(".canvas__maze-paths").transferControlToOffscreen();
+const offScreenCanvasWalls = document.querySelector(".canvas__maze-walls").transferControlToOffscreen();
 const sharedBuffer = new SharedArrayBuffer(MAZE_HEIGHT * MAZE_WIDTH);
 const maze = new Maze(MAZE_HEIGHT, MAZE_WIDTH);
 init();
