@@ -1,4 +1,4 @@
-import { MAZE_HEIGHT, MAZE_WIDTH, CELL_SIZE_RATIO } from "./config.js";
+import { MAZE_HEIGHT, MAZE_WIDTH, CELL_SIZE_RATIO, COLOR_WALL, COLOR_PATH, COLOR_EXPLORE, COLOR_SEARCH, COLOR_SOLVED } from "./config.js";
 import { walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST, toCoord } from "./utils.js"
 
 let pathLayerCanvas
@@ -18,6 +18,8 @@ self.onmessage = (message) => {
 			return createCell(message.data.idx);
 		case "walk":
 			return walk(message.data.idx);
+		case "cull":
+			return cull(message.data.indexes);
 		case "connect":
 			return connect(message.data.indexes);
 	}
@@ -46,7 +48,7 @@ function init(data) {
 const cellOriginInset = (idx) => idx * (wallWidth + pathWidth) + wallWidth;
 
 function clearMaze() {
-	wallLayer.fillStyle = "#FFF";
+	wallLayer.fillStyle = COLOR_WALL;
 	wallLayer.fillRect(0, 0, wallLayerCanvas.width, wallLayerCanvas.height);
 }
 
@@ -58,10 +60,25 @@ function createCell(idx) {
 }
 
 function walk(idx) {
-	return; //! implement
+	wallLayer.fillStyle = COLOR_EXPLORE;
+	const { row, col } = toCoord(idx);
+	let x = cellOriginInset(col);
+	let y = cellOriginInset(row);
+	wallLayer.fillRect(x, y, pathWidth, pathWidth);
+}
+
+function cull(indexes) {
+	wallLayer.fillStyle = COLOR_WALL;
+	for (let i = 0; i < indexes.length; i++) {
+		const { row, col } = toCoord(indexes[i]);
+		let x = cellOriginInset(col);
+		let y = cellOriginInset(row);
+		wallLayer.fillRect(x, y, pathWidth, pathWidth);
+	}
 }
 
 function connect(indexes) {
+	wallLayer.fillStyle = COLOR_PATH;
 	for (let i = 0; i < indexes.length; i++) {
 		const { row, col } = toCoord(indexes[i]);
 		let x = cellOriginInset(col);
@@ -75,13 +92,13 @@ function connect(indexes) {
 		if (dir === NORTH) y -= wallWidth;
 		if (dir === WEST) x -= wallWidth;
 
-		wallLayer.clearRect(x, y, width, height);
+		wallLayer.fillRect(x, y, width, height);
 	}
 }
 
 function debugGrid() {
 	wallLayer.clearRect(0, 0, wallLayerCanvas.width, wallLayerCanvas.height);
-	wallLayer.fillStyle = "#FFF";
+	wallLayer.fillStyle = COLOR_WALL;
 	for (let i = 0; i <= MAZE_WIDTH; i++) {
 		const inset = i * (wallWidth + pathWidth);
 		wallLayer.fillRect(inset, 0, wallWidth, wallLayerCanvas.height);

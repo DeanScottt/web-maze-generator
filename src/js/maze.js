@@ -1,4 +1,4 @@
-import { walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST, toIndex } from "./utils.js"
+import { walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, VISITED_MASK, NORTH, EAST, SOUTH, WEST, toIndex } from "./utils.js"
 import { MAZE_HEIGHT, MAZE_WIDTH } from "./config.js";
 
 class Maze {
@@ -82,20 +82,43 @@ class Maze {
 	}
 
 	getBreadCrumb(idx) {
-		return this.data[idx] >> WALK_DIR_SHIFT;
+		return (this.data[idx] & ~VISITED_MASK) >> WALK_DIR_SHIFT;
 	}
 
 	*createPath() {
+		console.log(this.data[0].toString(2).padStart(8, 0));
 		while (true) {
+			// Return when hitting existing maze
 			const idx = toIndex(this.pos);
 			if (this.data[idx] & IN_MAZE) return;
 
+			// Culling loop
+			if (this.data[idx] & VISITED_MASK) {
+				const returnData = [];
+				const startIdx = idx;
+				let i = startIdx;
+
+				do {
+					const dir = this.getBreadCrumb(i);
+					this.data[i] = this.data[i] & ~(VISITED_MASK | WALK_DIR_MASK);
+					returnData.push(i);
+					this.move(dir);
+					i = toIndex(this.pos);
+				} while (i !== startIdx);
+				
+				yield {type: "cull", indexes: returnData};
+				continue;
+			}
+
+			// Exploring further
+			this.data[idx] |= VISITED_MASK;
 			let dir = null;
 			do {dir = ~~(Math.random() * 4)} while (!this.inBounds(dir));
 
 			this.dropBreadCrumb(idx, dir);
 			yield {type: "walk", idx};
 			this.move(dir);
+
 		}
 	}
 

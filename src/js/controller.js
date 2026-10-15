@@ -21,17 +21,18 @@ function createMaze() {
 	gen = maze.generate(midIndex);
 	maze.debugRender();
 	document.addEventListener("keydown", (event) => {
-		if (event.key === " ") renderMazeGeneration();
+		if (event.key !== " ") return;
+		renderMazeGeneration();
 	});
 }
 
 function renderMazeGeneration() {
 	let result = gen.next();
-	while (!result.done && result.value.type !== "connect") result = gen.next();
 	if (result.done) return console.log("DONE");
 	canvasWorker.postMessage(result.value);
-	console.clear();
-	maze.debugRender();
+	setTimeout(() => {
+		renderMazeGeneration();
+	}, 5);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
