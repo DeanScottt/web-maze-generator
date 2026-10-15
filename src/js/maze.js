@@ -1,16 +1,11 @@
 import { MAZE_HEIGHT, MAZE_WIDTH, walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST } from "./config.js";
-import { sharedBuffer } from "./controller.js";
 
 class Maze {
 	totalMapped;
-	pos = {row: 0, col: 0};
-
-	constructor(rows, cols) {
-		this.rows = rows;
-		this.cols = cols;
-		this.totalCells = rows * cols;
-		this.data = new Uint8Array(sharedBuffer);
-	}
+	pos;
+	rows = MAZE_HEIGHT;
+	cols = MAZE_WIDTH;
+	totalCells = MAZE_HEIGHT * MAZE_WIDTH;
 
 	debugRender() {
 		const WALL = "██";
@@ -40,9 +35,11 @@ class Maze {
 		console.log(str);
 	}
 
-	reset() {
+	init(buffer) {
+		this.data = new Uint8Array(buffer);
 		this.data.fill(0b1111);
 		this.totalMapped = 1;
+		this.pos = {row: 0, col: 0};
 	}
 
 	setPos(idx) {
@@ -128,11 +125,8 @@ class Maze {
 		this.deleteWall(idx, oppositeDir(dir));
 	}
 
-	generate() {
-		const midRow = this.rows >> 1;
-		const midCol = this.cols >> 1;
-		const midIndex = this.toIndex({row: midRow, col: midCol});
-		this.data[midIndex] |= IN_MAZE;
+	generate(seedIndex) {
+		this.data[seedIndex] |= IN_MAZE;
 
 		for (let idx = 0; idx < this.totalCells; idx++) {
 			if (this.totalMapped === this.totalCells) break;
@@ -144,4 +138,4 @@ class Maze {
 	}
 }
 
-export default Maze;
+export default new Maze();

@@ -1,20 +1,26 @@
 import { MAZE_HEIGHT, MAZE_WIDTH, walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST } from "./config.js";
-import Maze from "./maze.js";
+import maze from "./maze.js";
 
 export const sharedBuffer = new SharedArrayBuffer(MAZE_HEIGHT * MAZE_WIDTH);
 const sharedState = new Uint8Array(sharedBuffer);
 const canvasWorker = new Worker(new URL("./canvas.js", import.meta.url), {type: "module"});
-const maze = new Maze(MAZE_HEIGHT, MAZE_WIDTH);
 
+function createMaze() {
+	maze.init(sharedBuffer);
+	const midRow = MAZE_HEIGHT >> 1;
+	const midCol = MAZE_WIDTH >> 1;
+	const midIndex = ~~(midRow / MAZE_WIDTH) + midCol;
 
+	canvasWorker.postMessage({
+		type: "seed",
+		pos: [midRow, midCol]
+	});
+	
+	maze.generate(midIndex);
+	maze.debugRender();
+}
 
-
-
-
-
-
-
-
+///////////////////////////////////////////////////////////////////////////////////////////////
 
 function init() {
 	const offScreenCanvasPaths = document.querySelector(".canvas__maze-paths").transferControlToOffscreen();
@@ -27,9 +33,7 @@ function init() {
 		buffer: sharedBuffer
 	}, [offScreenCanvasPaths, offScreenCanvasWalls]);
 	
-	maze.reset();
-	maze.generate();
-	maze.debugRender();
+	createMaze();
 }
 
 init();

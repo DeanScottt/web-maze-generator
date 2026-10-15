@@ -1,5 +1,5 @@
-export const MAZE_WIDTH = 50;
-export const MAZE_HEIGHT = 50;
+export const MAZE_WIDTH = 20;
+export const MAZE_HEIGHT = 20;
 
 export const walls = [0b0001, 0b0010, 0b0100, 0b1000];
 export const oppositeDir = (n) => n ^ 2;

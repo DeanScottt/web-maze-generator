@@ -10,7 +10,12 @@ let pathWidth;
 let wallWidth;
 
 self.onmessage = (message) => {
-	if (message.data.type === "init") return init(message.data);
+	switch (message.data.type) {
+		case "init":
+			return init(message.data);
+		case "seed":
+			return createCell(...message.data.pos);
+	}
 }
 
 function init(data) {
@@ -31,19 +36,21 @@ function init(data) {
 	wallLayerCanvas.width = newCanvasWidth;
 	wallLayerCanvas.height = newCanvasWidth;
 
-	debugGrid();
+	clearMaze();
 }
 
-const cellOriginInset = (idx) => idx * (wallWidth + pathWidth);
+const cellOriginInset = (idx) => idx * (wallWidth + pathWidth) + wallWidth;
 
-function deleteWall(idx, dir) {
-	const row = 2;
+function clearMaze() {
+	wallLayer.fillStyle = "#FFF";
+	wallLayer.fillRect(0, 0, wallLayerCanvas.width, wallLayerCanvas.height);
 }
 
-
-
-
-
+function createCell(row, col) {
+	const y = cellOriginInset(row);
+	const x = cellOriginInset(col);
+	wallLayer.clearRect(x, y, pathWidth, pathWidth);
+}
 
 function debugGrid() {
 	wallLayer.fillStyle = "#FFF";
