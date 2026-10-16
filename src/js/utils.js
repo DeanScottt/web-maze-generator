@@ -15,7 +15,6 @@ export const SOUTH = 0b10;
 export const WEST = 0b11;
 
 export const oppositeDir = (n) => n ^ 2;
-export const toIndex = (pos) => ~~(pos.row * MAZE_WIDTH) + pos.col;
 export function toCoord(idx) {
 	const row = ~~(idx / MAZE_WIDTH);
 	const col = idx % MAZE_WIDTH;

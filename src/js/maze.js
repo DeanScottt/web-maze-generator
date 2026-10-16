@@ -1,4 +1,4 @@
-import { walls, oppositeDir, rowOffset, colOffset, FLAG_IN_MAZE, FLAG_VISITED, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST, toIndex } from "./utils.js"
+import { walls, oppositeDir, rowOffset, colOffset, FLAG_IN_MAZE, FLAG_VISITED, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST } from "./utils.js"
 import { MAZE_HEIGHT, MAZE_WIDTH } from "./config.js";
 
 class VirtualGrid {
@@ -52,20 +52,18 @@ class VirtualGrid {
 }
 
 class Maze {
-	rows = MAZE_HEIGHT;
-	cols = MAZE_WIDTH;
 	totalCells = MAZE_HEIGHT * MAZE_WIDTH;
 	grid = new VirtualGrid(MAZE_HEIGHT, MAZE_WIDTH);
-	pos = {row: 0, col: 0};
+	idx = 0;
 
 	debugRender() {
 		const WALL = "██";
 		const OPEN = "  ";
-		const grid = Array.from({length: this.rows * 2 + 1}, () => Array(this.cols * 2 + 1).fill(WALL));
+		const grid = Array.from({length: MAZE_HEIGHT * 2 + 1}, () => Array(MAZE_WIDTH * 2 + 1).fill(WALL));
 
 		for (let i = 0; i < this.totalCells; i++) {
-			const row = ~~(i / this.cols) * 2 + 1;
-			const col = (i % this.cols) * 2 + 1;
+			const row = ~~(i / MAZE_WIDTH) * 2 + 1;
+			const col = (i % MAZE_WIDTH) * 2 + 1;
 			grid[row][col] = "  ";
 
 			for (let dir = 0; dir < 4; dir++) {
@@ -80,8 +78,8 @@ class Maze {
 	debugBinary() {
 		const converted = [...this.data].map(cell => cell.toString(2).padStart(8, 0));
 		let str = "";
-		for (let rowStart = 0; rowStart < this.totalCells; rowStart += this.cols) {
-			str += (converted.slice(rowStart, rowStart + this.cols).join("  ")) + "\n";
+		for (let rowStart = 0; rowStart < this.totalCells; rowStart += MAZE_WIDTH) {
+			str += (converted.slice(rowStart, rowStart + MAZE_WIDTH).join("  ")) + "\n";
 		}
 		console.log(str);
 	}
@@ -96,46 +94,51 @@ class Maze {
 		this.grid.reset();
 	}
 
-	setPos(idx) {
-		this.pos.row = ~~(idx / this.cols);
-		this.pos.col = idx % this.cols;
-	}
-
 	move(dir) {
-		this.pos.row += rowOffset[dir];
-		this.pos.col += colOffset[dir];
+		switch (dir) {
+			case NORTH:
+				return this.idx -= MAZE_WIDTH;
+			case EAST:
+				return ++this.idx;
+			case SOUTH:
+				return this.idx += MAZE_WIDTH;
+			case WEST:
+				return --this.idx;
+			default:
+				throw new Error("Invalid direction argument");
+		}
 	}
 
 	inBounds(dir) {
 		switch (dir) {
 			case NORTH:
-				return this.pos.row > 0;
+				return this.idx >= MAZE_WIDTH;
 			case EAST:
-				return this.pos.col < this.cols - 1;
+				return (this.idx + 1) % MAZE_WIDTH > 0;
 			case SOUTH:
-				return this.pos.row < this.rows - 1;
+				return this.idx < this.totalCells - MAZE_WIDTH;
 			case WEST:
-				return this.pos.col > 0;
+				return this.idx % MAZE_WIDTH > 0;
 			default:
-				throw new Error("Invalid direction value");
+				throw new Error("Invalid direction argument");
 		}
 	}
 
-	canMove(idx, dir) {
-		return !(this.data[idx] & walls[dir]);
+	canMove(dir) {
+		return !(this.data[this.idx] & walls[dir]);
 	}
 
-	deleteWall(idx, dir) {
-		this.data[idx] &= ~(walls[dir]);
+	deleteWall(dir) {
+		this.data[this.idx] &= ~(walls[dir]);
 	}
 
-	dropBreadCrumb(idx, dir) {
-		this.data[idx] &= ~WALK_DIR_MASK;
-		this.data[idx] |= (dir << WALK_DIR_SHIFT);
+	dropBreadCrumb(dir) {
+		this.data[this.idx] &= ~WALK_DIR_MASK;
+		this.data[this.idx] |= (dir << WALK_DIR_SHIFT);
 	}
 
-	getBreadCrumb(idx) {
-		return this.data[idx] >> WALK_DIR_SHIFT;
+	getBreadCrumb() {
+		return this.data[this.idx] >> WALK_DIR_SHIFT;
 	}
 
 	*createPath() {
@@ -143,69 +146,61 @@ class Maze {
 
 		while (true) {
 			// Return when hitting existing maze
-			const idx = toIndex(this.pos);
-			if (this.data[idx] & FLAG_IN_MAZE) break;
+			if (this.data[this.idx] & FLAG_IN_MAZE) return;
 
 			// Culling loop
-			if (this.data[idx] & FLAG_VISITED) {
+			if (this.data[this.idx] & FLAG_VISITED) {
 				const cullData = [];
-				const startIdx = idx;
-				let i = startIdx;
-
+				const startIdx = this.idx;
 				do {
-					const dir = this.getBreadCrumb(i);
-					this.data[i] = this.data[i] & ~(FLAG_VISITED | WALK_DIR_MASK);
-					cullData.push(i);
+					const dir = this.getBreadCrumb();
+					this.data[this.idx] &= ~(FLAG_VISITED | WALK_DIR_MASK);
+					cullData.push(this.idx);
 					this.move(dir);
-					i = toIndex(this.pos);
-				} while (i !== startIdx);
+				} while (this.idx !== startIdx);
 				
 				yield {type: "cull", indexes: cullData};
 				continue;
 			}
 
 			// Exploring further
-			this.data[idx] |= FLAG_VISITED;
-			const dirOptions = [];
-			for (let dir = 0; dir < 4; dir++) {
-				if (this.inBounds(dir) && dir !== lastDir) dirOptions.push(dir);
-			}
-
+			this.data[this.idx] |= FLAG_VISITED;
+			const dirOptions = [NORTH, EAST, SOUTH, WEST].filter(dir => this.inBounds(dir) && dir !== lastDir);
 			const dir = dirOptions[~~(Math.random() * dirOptions.length)];
-			this.dropBreadCrumb(idx, dir);
+			lastDir = dir;
+
+			this.dropBreadCrumb(dir);
+			yield {type: "walk", idx: this.idx};
 			this.move(dir);
-			yield {type: "walk", idx};
 		}
 	}
 
-	*connectPath(startIdx) {
-		const returnData = [startIdx];
+	*connectPath() {
+		const returnData = [this.idx];
 
-		// Set in-maze flag on first cell
-		this.setPos(startIdx);
-		this.data[startIdx] |= FLAG_IN_MAZE;
+		// Update flags
+		this.data[this.idx] |= FLAG_IN_MAZE;
+		this.data[this.idx] &= ~(FLAG_VISITED);
 		
 		// Delete the wall and move to next cell in chain
-		let dir = this.getBreadCrumb(startIdx);
-		this.deleteWall(startIdx, dir);
+		let dir = this.getBreadCrumb();
+		this.deleteWall(dir);
 		this.move(dir);
-		let idx = toIndex(this.pos);
 
 		// Loop until maze is hit, setting flags and clearing walls
-		while (!(this.data[idx] & FLAG_IN_MAZE)) {
-			returnData.push(idx);
-			this.grid.markCell(idx);
-			this.data[idx] |= FLAG_IN_MAZE;
-			this.deleteWall(idx, oppositeDir(dir));
-			dir = this.getBreadCrumb(idx);
-
-			this.deleteWall(idx, dir);
+		while (!(this.data[this.idx] & FLAG_IN_MAZE)) {
+			returnData.push(this.idx);
+			this.grid.markCell(this.idx);
+			this.data[this.idx] |= FLAG_IN_MAZE;
+			this.deleteWall(oppositeDir(dir));
+			dir = this.getBreadCrumb();
+			
+			this.deleteWall(dir);
 			this.move(dir);
-			idx = toIndex(this.pos);
 		}
 
 		// Delete final wall and yield the chain as a group
-		this.deleteWall(idx, oppositeDir(dir));
+		this.deleteWall(oppositeDir(dir));
 		yield {type: "connect", indexes: returnData};
 	}
 
@@ -214,10 +209,11 @@ class Maze {
 		this.grid.markCell(seedIndex);
 
 		while (this.grid.remaining) {
-			const idx = this.grid.getRandom();
-			this.setPos(idx);
+			const startIdx = this.grid.getRandom();
+			this.idx = startIdx;
 			yield* this.createPath();
-			yield* this.connectPath(idx);
+			this.idx = startIdx;
+			yield* this.connectPath();
 		}
 	}
 }
