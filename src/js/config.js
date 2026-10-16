@@ -7,3 +7,6 @@ export const COLOR_PATH = "#38D";
 export const COLOR_EXPLORE = "#9A2";
 export const COLOR_SEARCH = "#C40";
 export const COLOR_SOLVED = "#0F7";
+
+export const STEPS_PER_FRAME_WALK = 10;
+export const INTERVAL_WALK = 5;

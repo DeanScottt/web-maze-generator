@@ -1,5 +1,5 @@
 import { MAZE_HEIGHT, MAZE_WIDTH, CELL_SIZE_RATIO, COLOR_WALL, COLOR_PATH, COLOR_EXPLORE, COLOR_SEARCH, COLOR_SOLVED } from "./config.js";
-import { WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST, toCoord } from "./utils.js"
+import { WALK_DIR_SHIFT, NORTH, EAST, SOUTH, WEST, toCoord } from "./utils.js"
 
 let canvas;
 let ctx;
@@ -12,14 +12,21 @@ self.onmessage = (message) => {
 	switch (message.data.type) {
 		case "init":
 			return init(message.data);
+
 		case "reset":
 			return clearMaze();
+
 		case "seed":
 			return createCell(message.data.idx, COLOR_PATH);
+
 		case "walk":
-			return walk(message.data.idx);
+			for (const idx of message.data.indexes) createCell(idx, COLOR_EXPLORE);
+			return;
+
 		case "cull":
-			return cull(message.data.indexes);
+			for (const idx of message.data.indexes) createCell(idx, COLOR_WALL);
+			return;
+
 		case "connect":
 			return connect(message.data.indexes);
 	}
@@ -51,29 +58,11 @@ function clearMaze() {
 }
 
 function createCell(idx, color) {
-	ctx.fillStyle = COLOR_PATH;
+	ctx.fillStyle = color;
 	const { row, col } = toCoord(idx);
 	const y = cellOriginInset(row);
 	const x = cellOriginInset(col);
 	ctx.fillRect(x, y, pathWidth, pathWidth);
-}
-
-function walk(idx) {
-	ctx.fillStyle = COLOR_EXPLORE;
-	const { row, col } = toCoord(idx);
-	let x = cellOriginInset(col);
-	let y = cellOriginInset(row);
-	ctx.fillRect(x, y, pathWidth, pathWidth);
-}
-
-function cull(indexes) {
-	ctx.fillStyle = COLOR_WALL;
-	for (let i = 0; i < indexes.length; i++) {
-		const { row, col } = toCoord(indexes[i]);
-		let x = cellOriginInset(col);
-		let y = cellOriginInset(row);
-		ctx.fillRect(x, y, pathWidth, pathWidth);
-	}
 }
 
 function connect(indexes) {

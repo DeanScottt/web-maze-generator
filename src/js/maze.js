@@ -1,5 +1,5 @@
-import { walls, oppositeDir, rowOffset, colOffset, FLAG_IN_MAZE, FLAG_VISITED, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST } from "./utils.js"
-import { MAZE_HEIGHT, MAZE_WIDTH } from "./config.js";
+import { walls, oppositeDir, FLAG_IN_MAZE, FLAG_VISITED, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST, toCoord } from "./utils.js"
+import { MAZE_HEIGHT, MAZE_WIDTH, STEPS_PER_FRAME_WALK } from "./config.js";
 
 class VirtualGrid {
 	#valueToPosition = new Map();
@@ -53,27 +53,9 @@ class VirtualGrid {
 
 class Maze {
 	totalCells = MAZE_HEIGHT * MAZE_WIDTH;
+	target = this.totalCells - 1;
 	grid = new VirtualGrid(MAZE_HEIGHT, MAZE_WIDTH);
 	idx = 0;
-
-	debugRender() {
-		const WALL = "██";
-		const OPEN = "  ";
-		const grid = Array.from({length: MAZE_HEIGHT * 2 + 1}, () => Array(MAZE_WIDTH * 2 + 1).fill(WALL));
-
-		for (let i = 0; i < this.totalCells; i++) {
-			const row = ~~(i / MAZE_WIDTH) * 2 + 1;
-			const col = (i % MAZE_WIDTH) * 2 + 1;
-			grid[row][col] = "  ";
-
-			for (let dir = 0; dir < 4; dir++) {
-				if (this.data[i] & walls[dir]) continue;
-				grid[row + rowOffset[dir]][col + colOffset[dir]] = OPEN;
-			}
-		}
-
-		console.log(grid.map(row => row.join("")).join("\n"));
-	}
 
 	debugBinary() {
 		const converted = [...this.data].map(cell => cell.toString(2).padStart(8, 0));
@@ -142,37 +124,47 @@ class Maze {
 	}
 
 	*createPath() {
+		let walkData = [];
 		let lastDir = null;
-
 		while (true) {
 			// Return when hitting existing maze
-			if (this.data[this.idx] & FLAG_IN_MAZE) return;
+			if (this.data[this.idx] & FLAG_IN_MAZE) break;
 
 			// Culling loop
 			if (this.data[this.idx] & FLAG_VISITED) {
 				const cullData = [];
 				const startIdx = this.idx;
+
 				do {
 					const dir = this.getBreadCrumb();
 					this.data[this.idx] &= ~(FLAG_VISITED | WALK_DIR_MASK);
 					cullData.push(this.idx);
 					this.move(dir);
+
 				} while (this.idx !== startIdx);
 				
-				yield {type: "cull", indexes: cullData};
+				while (cullData.length && walkData.length) {
+					cullData.pop();
+					walkData.pop();
+				}
+
+				if (cullData.length) yield {type: "cull", indexes: cullData};
 				continue;
 			}
 
 			// Exploring further
+			walkData.push(this.idx);
 			this.data[this.idx] |= FLAG_VISITED;
-			const dirOptions = [NORTH, EAST, SOUTH, WEST].filter(dir => this.inBounds(dir) && dir !== lastDir);
+			const dirOptions = [NORTH, EAST, SOUTH, WEST].filter(dir => this.inBounds(dir) && dir !== oppositeDir(lastDir));
 			const dir = dirOptions[~~(Math.random() * dirOptions.length)];
 			lastDir = dir;
 
 			this.dropBreadCrumb(dir);
-			yield {type: "walk", idx: this.idx};
 			this.move(dir);
+			if (walkData.length === STEPS_PER_FRAME_WALK) yield {type: "walk", indexes: walkData.splice(0)};
 		}
+
+		if (walkData.length) yield {type: "walk", indexes: walkData};
 	}
 
 	*connectPath() {
@@ -192,6 +184,7 @@ class Maze {
 			returnData.push(this.idx);
 			this.grid.markCell(this.idx);
 			this.data[this.idx] |= FLAG_IN_MAZE;
+			this.data[this.idx] &= ~(FLAG_VISITED);
 			this.deleteWall(oppositeDir(dir));
 			dir = this.getBreadCrumb();
 			
@@ -200,6 +193,7 @@ class Maze {
 		}
 
 		// Delete final wall and yield the chain as a group
+		this.data[this.idx] &= ~(FLAG_VISITED);
 		this.deleteWall(oppositeDir(dir));
 		yield {type: "connect", indexes: returnData};
 	}
@@ -215,6 +209,10 @@ class Maze {
 			this.idx = startIdx;
 			yield* this.connectPath();
 		}
+	}
+
+	*solve() {
+		this.idx = 0;
 	}
 }
 

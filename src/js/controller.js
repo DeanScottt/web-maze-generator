@@ -1,4 +1,4 @@
-import { MAZE_HEIGHT, MAZE_WIDTH } from "./config.js";
+import { MAZE_HEIGHT, MAZE_WIDTH, INTERVAL_WALK } from "./config.js";
 import maze from "./maze.js";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -40,7 +40,7 @@ function handleGenerate() {
 	canvasWorker.postMessage({ type: "seed", idx: midIndex });
 	state.gen = maze.generate(midIndex);
 	
-	state.genInterval = setInterval(() => {controlGenerationStep()}, 5);
+	state.genInterval = setInterval(() => {controlGenerationStep()}, INTERVAL_WALK);
 }
 
 function controlGenerationStep(skipTo) {
