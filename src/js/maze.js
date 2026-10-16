@@ -5,7 +5,7 @@ class VirtualGrid {
 	#valueToPosition = new Map();
 	#positionToValue = new Map();
 	#originalSize;
-	size;
+	remaining;
 
 	constructor(rows, cols) {
 		this.#originalSize = rows * cols;
@@ -13,7 +13,7 @@ class VirtualGrid {
 	}
 
 	reset() {
-		this.size = this.#originalSize;
+		this.remaining = this.#originalSize;
 		this.#valueToPosition.clear();
 		this.#positionToValue.clear();
 	}
@@ -33,7 +33,7 @@ class VirtualGrid {
 
 	#removeAt(pos) {
 		const marked = this.#getValueAt(pos);
-		const lastPos = --this.size;
+		const lastPos = --this.remaining;
 		const lastVal = this.#getValueAt(lastPos);
 
 		this.#positionToValue.set(pos, lastVal);
@@ -46,17 +46,17 @@ class VirtualGrid {
 	}
 
 	getRandom() {
-		const rand = ~~(Math.random() * this.size);
+		const rand = ~~(Math.random() * this.remaining);
 		return this.#removeAt(rand);
 	}
 }
 
 class Maze {
-	totalMapped;
-	pos;
 	rows = MAZE_HEIGHT;
 	cols = MAZE_WIDTH;
 	totalCells = MAZE_HEIGHT * MAZE_WIDTH;
+	grid = new VirtualGrid(MAZE_HEIGHT, MAZE_WIDTH);
+	pos;
 
 	debugRender() {
 		const WALL = "██";
@@ -89,8 +89,8 @@ class Maze {
 	init(buffer) {
 		this.data = new Uint8Array(buffer);
 		this.data.fill(0b1111);
-		this.totalMapped = 1;
 		this.pos = {row: 0, col: 0};
+		this.grid.reset();
 	}
 
 	setPos(idx) {
@@ -181,7 +181,6 @@ class Maze {
 		// Set in-maze flag on first cell
 		this.setPos(startIdx);
 		this.data[startIdx] |= IN_MAZE;
-		this.totalMapped++;
 		
 		// Delete the wall and move to next cell in chain
 		let dir = this.getBreadCrumb(startIdx);
@@ -192,8 +191,8 @@ class Maze {
 		// Loop until maze is hit, setting flags and clearing walls
 		while (!(this.data[idx] & IN_MAZE)) {
 			returnData.push(idx);
+			this.grid.markCell(idx);
 			this.data[idx] |= IN_MAZE;
-			this.totalMapped++;
 			this.deleteWall(idx, oppositeDir(dir));
 			dir = this.getBreadCrumb(idx);
 
@@ -209,10 +208,10 @@ class Maze {
 
 	*generate(seedIndex) {
 		this.data[seedIndex] |= IN_MAZE;
+		this.grid.markCell(seedIndex);
 
-		for (let idx = 0; idx < this.totalCells; idx++) {
-			if (this.totalMapped === this.totalCells) break;
-			if (this.data[idx] & IN_MAZE) continue;
+		while (this.grid.remaining) {
+			const idx = this.grid.getRandom();
 			this.setPos(idx);
 			yield* this.createPath();
 			yield* this.connectPath(idx);
