@@ -31,11 +31,9 @@ self.onmessage = (message) => {
 			return connect(message.data.indexes, COLOR_PATH);
 
 		case "search":
-			for (const idx of message.data.indexes) createCell(idx, COLOR_SEARCH);
-			return;
+			return connect(message.data.indexes, COLOR_SEARCH);
 
 		case "solve":
-			for (let i = MAZE_HEIGHT * MAZE_WIDTH - 1; i >= 0; i--) createCell(i, COLOR_PATH);
 			return connect(message.data.indexes, COLOR_SOLVED);
 	}
 }

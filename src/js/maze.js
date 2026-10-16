@@ -1,5 +1,5 @@
 import { walls, oppositeDir, FLAG_IN_MAZE, FLAG_VISITED, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST } from "./utils.js"
-import { MAZE_HEIGHT, MAZE_WIDTH, STEPS_PER_FRAME_SEARCH, STEPS_PER_FRAME_WALK } from "./config.js";
+import { MAZE_HEIGHT, MAZE_WIDTH, STEPS_PER_FRAME_WALK } from "./config.js";
 
 class Queue {
 	head = new QueueNode();
@@ -255,7 +255,7 @@ class Maze {
 		while (queue.size) {
 			const idx = queue.deQueue();
 
-			if (searchData.push(idx) === STEPS_PER_FRAME_SEARCH) yield { type: "search", indexes: searchData.splice(0) };
+			if (searchData.push(idx) >= queue.size) yield { type: "search", indexes: searchData.splice(0) };
 			if (idx === this.target) break;
 
 			for (let dir = 0; dir < 4; dir++) {

@@ -1,6 +1,6 @@
 import { MAZE_HEIGHT, MAZE_WIDTH, INTERVAL_WALK, INTERVAL_SEARCH, SKIP_WALKING_ANIMATION } from "./config.js";
-import maze from "./maze.js";
 import { NORTH, EAST, SOUTH, WEST, walls } from "./utils.js";
+import maze from "./maze.js";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
