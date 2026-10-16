@@ -1,5 +1,6 @@
-import { MAZE_HEIGHT, MAZE_WIDTH, INTERVAL_WALK } from "./config.js";
+import { MAZE_HEIGHT, MAZE_WIDTH, INTERVAL_WALK, INTERVAL_SEARCH, SKIP_WALKING_ANIMATION } from "./config.js";
 import maze from "./maze.js";
+import { NORTH, EAST, SOUTH, WEST, walls } from "./utils.js";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -13,7 +14,6 @@ const canvasWorker = new Worker(new URL("./canvas.js", import.meta.url), {type: 
 const state = {
 	initialized: false,
 	generated: false,
-	solving: false,
 	solved: false,
 	genInterval: null,
 	gen: null
@@ -38,24 +38,25 @@ function handleGenerate() {
 	const midCol = MAZE_WIDTH >> 1;
 	const midIndex = ~~(midRow * MAZE_WIDTH) + midCol;
 	canvasWorker.postMessage({ type: "seed", idx: midIndex });
-	state.gen = maze.generate(midIndex);
 	
-	state.genInterval = setInterval(() => {controlGenerationStep()}, INTERVAL_WALK);
+	state.generated = false;
+	state.solved = false;
+	state.gen = maze.generate(midIndex);
+	state.genInterval = setInterval(controlGenerationStep, INTERVAL_WALK);
 }
 
-function controlGenerationStep(skipTo) {
-	let result = state.gen.next();
+function controlGenerationStep() {
+	let output = state.gen.next();
 
-	if (skipTo) {
-		while (!result.done && result.value.type !== skipTo) result = state.gen.next();
+	if (SKIP_WALKING_ANIMATION) {
+		while (!output.done && output.value.type !== "connect") output = state.gen.next();
 	}
-
-	if (!result.done) return canvasWorker.postMessage(result.value);
+	if (!output.done) return canvasWorker.postMessage(output.value);
 
 	clearInterval(state.genInterval);
 	state.genInterval = null;
-	state.generated = true;
 	state.gen = null;
+	state.generated = true;
 }
 
 //* ---------------------------------
@@ -63,7 +64,25 @@ function controlGenerationStep(skipTo) {
 //* ---------------------------------
 
 function handleSolve() {
-	console.log("test");
+	if (state.solved || !state.generated || state.gen) return;
+	state.gen = maze.solve();
+	state.genInterval = setInterval(controlSearchStep, INTERVAL_SEARCH);
+}
+
+function controlSearchStep() {
+	const output = state.gen.next();
+
+	if (!output.done) return canvasWorker.postMessage(output.value);
+
+	clearInterval(state.genInterval);
+	state.genInterval = null;
+	state.gen = null;
+	state.solved = true;
+
+	const path = maze.traceSolution();
+	canvasWorker.postMessage({ type: "solve", indexes: path });
+	maze.debugBinary();
+	console.log(getAllWalls());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,4 +100,25 @@ function initCanvasWorker() {
 		canvas: offScreenCanvas,
 		buffer: sharedBuffer
 	}, [offScreenCanvas]);
+}
+
+
+function getWalls(row, col) {
+	const idx = (row * MAZE_WIDTH) + col;
+	const output = {
+		North: (maze.data[idx] & walls[NORTH] ? true : false),
+		East: (maze.data[idx] & walls[EAST] ? true : false),
+		South: (maze.data[idx] & walls[SOUTH] ? true : false),
+		West: (maze.data[idx] & walls[WEST] ? true : false)
+	}
+	return output;
+}
+
+function getAllWalls() {
+	const grid = Array.from(
+		{length: MAZE_HEIGHT}, (_, row) => Array(MAZE_WIDTH)
+			.fill(0)
+			.map((_, col) => getWalls(row, col)));
+
+	return grid;
 }

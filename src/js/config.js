@@ -9,4 +9,8 @@ export const COLOR_SEARCH = "#C40";
 export const COLOR_SOLVED = "#0F7";
 
 export const STEPS_PER_FRAME_WALK = 10;
+export const STEPS_PER_FRAME_SEARCH = 5;
 export const INTERVAL_WALK = 5;
+export const INTERVAL_SEARCH = 5;
+
+export const SKIP_WALKING_ANIMATION = true;

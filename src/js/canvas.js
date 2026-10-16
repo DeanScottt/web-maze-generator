@@ -28,7 +28,15 @@ self.onmessage = (message) => {
 			return;
 
 		case "connect":
-			return connect(message.data.indexes);
+			return connect(message.data.indexes, COLOR_PATH);
+
+		case "search":
+			for (const idx of message.data.indexes) createCell(idx, COLOR_SEARCH);
+			return;
+
+		case "solve":
+			for (let i = MAZE_HEIGHT * MAZE_WIDTH - 1; i >= 0; i--) createCell(i, COLOR_PATH);
+			return connect(message.data.indexes, COLOR_SOLVED);
 	}
 }
 
@@ -65,8 +73,8 @@ function createCell(idx, color) {
 	ctx.fillRect(x, y, pathWidth, pathWidth);
 }
 
-function connect(indexes) {
-	ctx.fillStyle = COLOR_PATH;
+function connect(indexes, color) {
+	ctx.fillStyle = color;
 	for (let i = 0; i < indexes.length; i++) {
 		const { row, col } = toCoord(indexes[i]);
 		let x = cellOriginInset(col);
