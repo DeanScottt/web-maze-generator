@@ -31,7 +31,7 @@ function handleGenerate() {
 		state.initialized = true;
 	} else {
 		maze.reset();
-		canvasWorker.postMessage({ type: "reset" })
+		canvasWorker.postMessage({ type: "reset" });
 	}
 	
 	const midRow = MAZE_HEIGHT >> 1;
@@ -81,8 +81,6 @@ function controlSearchStep() {
 
 	const path = maze.traceSolution();
 	canvasWorker.postMessage({ type: "solve", indexes: path });
-	maze.debugBinary();
-	console.log(getAllWalls());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////

@@ -246,15 +246,13 @@ class Maze {
 			yield* this.connectPath();
 		}
 
-		this.data = this.data.map(bin => bin & ~(FLAG_VISITED | WALK_DIR_MASK));
+		this.data.forEach((_, i) => this.data[i] &= ~(FLAG_VISITED | WALK_DIR_MASK));
 	}
 
 	*solve() {
 		const searchData = [];
 		const queue = new Queue();
 		queue.enQueue(0);
-
-		debugger;
 
 		while (queue.size) {
 			const idx = queue.deQueue();
