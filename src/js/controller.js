@@ -1,5 +1,4 @@
 import { MAZE_HEIGHT, MAZE_WIDTH } from "./config.js";
-import { walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST } from "./utils.js"
 import maze from "./maze.js";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -25,13 +24,14 @@ function createMaze() {
 		maze.init(sharedBuffer);
 		initialized = true;
 	} else {
-		
+		maze.reset();
+		canvasWorker.postMessage({ type: "reset" })
 	}
 	
 	const midRow = MAZE_HEIGHT >> 1;
 	const midCol = MAZE_WIDTH >> 1;
 	const midIndex = ~~(midRow * MAZE_WIDTH) + midCol;
-	canvasWorker.postMessage({ type: "reset", idx: midIndex });
+	canvasWorker.postMessage({ type: "seed", idx: midIndex });
 	gen = maze.generate(midIndex);
 	
 	genInterval = setInterval(() => {controlGenerationStep()}, 5);

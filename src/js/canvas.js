@@ -1,5 +1,5 @@
 import { MAZE_HEIGHT, MAZE_WIDTH, CELL_SIZE_RATIO, COLOR_WALL, COLOR_PATH, COLOR_EXPLORE, COLOR_SEARCH, COLOR_SOLVED } from "./config.js";
-import { walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST, toCoord } from "./utils.js"
+import { WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST, toCoord } from "./utils.js"
 
 let canvas;
 let ctx;
@@ -15,7 +15,7 @@ self.onmessage = (message) => {
 		case "reset":
 			return clearMaze();
 		case "seed":
-			return createCell(message.data.idx);
+			return createCell(message.data.idx, COLOR_PATH);
 		case "walk":
 			return walk(message.data.idx);
 		case "cull":
@@ -30,15 +30,16 @@ function init(data) {
 	canvas = data.canvas;
 	ctx = canvas.getContext("2d");
 
-	const wallNum = MAZE_WIDTH + 1;
-	wallWidth = canvas.height / (CELL_SIZE_RATIO * MAZE_WIDTH + wallNum);
+	wallWidth = canvas.height / (CELL_SIZE_RATIO * MAZE_HEIGHT + (MAZE_HEIGHT + 1));
 	pathWidth = wallWidth * CELL_SIZE_RATIO;
 	wallWidth |= 1;
 	pathWidth |= 1;
 
-	const newCanvasWidth = MAZE_WIDTH * pathWidth + wallNum * wallWidth;
-	canvas.width = canvas.height = newCanvasWidth;
-	
+	const newCanvasHeight = MAZE_HEIGHT * pathWidth + (MAZE_HEIGHT + 1) * wallWidth;
+	const newCanvasWidth = MAZE_WIDTH * pathWidth + (MAZE_WIDTH + 1) * wallWidth;
+	canvas.height = newCanvasHeight;
+	canvas.width = newCanvasWidth;
+
 	clearMaze();
 }
 
@@ -49,7 +50,7 @@ function clearMaze() {
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-function createCell(idx) {
+function createCell(idx, color) {
 	ctx.fillStyle = COLOR_PATH;
 	const { row, col } = toCoord(idx);
 	const y = cellOriginInset(row);
@@ -84,9 +85,10 @@ function connect(indexes) {
 		let width = pathWidth;
 		let height = pathWidth;
 
-		const dir = (sharedData[indexes[i]] & WALK_DIR_MASK) >> WALK_DIR_SHIFT;
+		const dir = sharedData[indexes[i]] >> WALK_DIR_SHIFT;
+		
 		if (dir === EAST || dir === WEST) width += wallWidth;
-		else height += wallWidth;
+		if (dir === NORTH || dir === SOUTH) height += wallWidth;
 		if (dir === NORTH) y -= wallWidth;
 		if (dir === WEST) x -= wallWidth;
 

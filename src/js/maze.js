@@ -1,4 +1,4 @@
-import { walls, oppositeDir, rowOffset, colOffset, IN_MAZE, WALK_DIR_SHIFT, WALK_DIR_MASK, VISITED_MASK, NORTH, EAST, SOUTH, WEST, toIndex } from "./utils.js"
+import { walls, oppositeDir, rowOffset, colOffset, FLAG_IN_MAZE, FLAG_VISITED, WALK_DIR_SHIFT, WALK_DIR_MASK, NORTH, EAST, SOUTH, WEST, toIndex } from "./utils.js"
 import { MAZE_HEIGHT, MAZE_WIDTH } from "./config.js";
 
 class VirtualGrid {
@@ -56,7 +56,7 @@ class Maze {
 	cols = MAZE_WIDTH;
 	totalCells = MAZE_HEIGHT * MAZE_WIDTH;
 	grid = new VirtualGrid(MAZE_HEIGHT, MAZE_WIDTH);
-	pos;
+	pos = {row: 0, col: 0};
 
 	debugRender() {
 		const WALL = "██";
@@ -88,8 +88,11 @@ class Maze {
 
 	init(buffer) {
 		this.data = new Uint8Array(buffer);
+		this.reset();
+	}
+
+	reset() {
 		this.data.fill(0b1111);
-		this.pos = {row: 0, col: 0};
 		this.grid.reset();
 	}
 
@@ -132,7 +135,7 @@ class Maze {
 	}
 
 	getBreadCrumb(idx) {
-		return (this.data[idx] & ~VISITED_MASK) >> WALK_DIR_SHIFT;
+		return this.data[idx] >> WALK_DIR_SHIFT;
 	}
 
 	*createPath() {
@@ -141,17 +144,17 @@ class Maze {
 		while (true) {
 			// Return when hitting existing maze
 			const idx = toIndex(this.pos);
-			if (this.data[idx] & IN_MAZE) break;
+			if (this.data[idx] & FLAG_IN_MAZE) break;
 
 			// Culling loop
-			if (this.data[idx] & VISITED_MASK) {
+			if (this.data[idx] & FLAG_VISITED) {
 				const cullData = [];
 				const startIdx = idx;
 				let i = startIdx;
 
 				do {
 					const dir = this.getBreadCrumb(i);
-					this.data[i] = this.data[i] & ~(VISITED_MASK | WALK_DIR_MASK);
+					this.data[i] = this.data[i] & ~(FLAG_VISITED | WALK_DIR_MASK);
 					cullData.push(i);
 					this.move(dir);
 					i = toIndex(this.pos);
@@ -162,7 +165,7 @@ class Maze {
 			}
 
 			// Exploring further
-			this.data[idx] |= VISITED_MASK;
+			this.data[idx] |= FLAG_VISITED;
 			const dirOptions = [];
 			for (let dir = 0; dir < 4; dir++) {
 				if (this.inBounds(dir) && dir !== lastDir) dirOptions.push(dir);
@@ -180,7 +183,7 @@ class Maze {
 
 		// Set in-maze flag on first cell
 		this.setPos(startIdx);
-		this.data[startIdx] |= IN_MAZE;
+		this.data[startIdx] |= FLAG_IN_MAZE;
 		
 		// Delete the wall and move to next cell in chain
 		let dir = this.getBreadCrumb(startIdx);
@@ -189,10 +192,10 @@ class Maze {
 		let idx = toIndex(this.pos);
 
 		// Loop until maze is hit, setting flags and clearing walls
-		while (!(this.data[idx] & IN_MAZE)) {
+		while (!(this.data[idx] & FLAG_IN_MAZE)) {
 			returnData.push(idx);
 			this.grid.markCell(idx);
-			this.data[idx] |= IN_MAZE;
+			this.data[idx] |= FLAG_IN_MAZE;
 			this.deleteWall(idx, oppositeDir(dir));
 			dir = this.getBreadCrumb(idx);
 
@@ -207,7 +210,7 @@ class Maze {
 	}
 
 	*generate(seedIndex) {
-		this.data[seedIndex] |= IN_MAZE;
+		this.data[seedIndex] |= FLAG_IN_MAZE;
 		this.grid.markCell(seedIndex);
 
 		while (this.grid.remaining) {
