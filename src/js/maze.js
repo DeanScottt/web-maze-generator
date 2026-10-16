@@ -165,7 +165,7 @@ class Maze {
 	}
 
 	*createPath() {
-		let walkData = [];
+		const walkData = [];
 		let lastDir = null;
 		while (true) {
 			// Return when hitting existing maze
@@ -204,8 +204,6 @@ class Maze {
 			this.move(dir);
 			if (walkData.length === STEPS_PER_FRAME_WALK) yield {type: "walk", indexes: walkData.splice(0)};
 		}
-
-		if (walkData.length) yield {type: "walk", indexes: walkData};
 	}
 
 	*connectPath() {

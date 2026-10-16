@@ -36,7 +36,7 @@ function handleGenerate() {
 	
 	const midRow = MAZE_HEIGHT >> 1;
 	const midCol = MAZE_WIDTH >> 1;
-	const midIndex = ~~(midRow * MAZE_WIDTH) + midCol;
+	const midIndex = (midRow * MAZE_WIDTH) + midCol;
 	canvasWorker.postMessage({ type: "seed", idx: midIndex });
 	
 	state.generated = false;

@@ -37,13 +37,14 @@ button {
 	font-size: 3rem;
 	font-weight: bold;
 	cursor: pointer;
-	transition: all 0.5s;
+	transition: all 0.3s;
 	overflow: hidden;
 }
 
-button:hover {
+button:hover, button:focus-visible {
 	scale: 1.1;
 	color: #FFF;
+	outline: none;
 }
 
 button:active {
@@ -64,8 +65,8 @@ button::after, button::before {
 	transform: translateX(-50%);
 }
 
-button:hover::after, button:hover::before {
-	transition: all 0.5s;
+button:hover::after, button:focus-visible::after, button:hover::before, button:focus-visible::before {
+	transition: all 0.3s;
 	width: 100%;
 }
 
