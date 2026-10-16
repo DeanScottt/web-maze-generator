@@ -1,3 +1,8 @@
+:root {
+	--vapor-wave-gradient: linear-gradient(45deg, #833AB4, #fd1d68 50%, #FCB045);
+	--vapor-wave-gradient-reverse: linear-gradient(45deg, #FCB045, #fd1d68 50%, #833AB4);
+}
+
 * {
 	margin: 0;
 	padding: 0;
@@ -5,24 +10,72 @@
 	font-size: 10px;
 }
 
-body {
+.app__container {
 	background-color: #000;
 	height: 100dvh;
 	width: 100dvw;
 	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	place-items: center;
 }
 
-.canvas__container {
-	place-self: center;
+.control__panel {
+	height: fit-content;
+	width: fit-content;
+	background-color: black;
 	display: grid;
-	grid-template: 100% / 100%;
-	height: 90dvh;
-	aspect-ratio: 1;
+	grid-template-rows: 1fr;
+	gap: 2rem;
+}
+
+button {
+	position: relative;
+	padding: 2rem 10rem;
+	background: var(--vapor-wave-gradient);
+	border: none;
+	border-radius: 1rem;
+	font-size: 3rem;
+	font-weight: bold;
+	cursor: pointer;
+	transition: all 0.5s;
+	overflow: hidden;
+}
+
+button:hover {
+	scale: 1.1;
+	color: #FFF;
+}
+
+button:active {
+	transition: all 0.1s;
+	scale: 0.95;
+}
+
+button::before { top: 0; }
+button::after { bottom: 0; }
+
+button::after, button::before {
+	position: absolute;
+	content: "";
+	height: 0.5rem;
+	width: 0;
+	background: var(--vapor-wave-gradient-reverse);
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+button:hover::after, button:hover::before {
+	transition: all 0.5s;
+	width: 100%;
+}
+
+button:active::after, button:active::before {
+	transition: all 0.1s;
+	width: 0;
 }
 
 canvas {
-	grid-area: 1 / 1;
-	height: 100%;
+	height: 90dvh;
 	aspect-ratio: 1;
 }
 
